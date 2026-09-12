@@ -24,16 +24,12 @@ const Layout = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f5f7fa" }}>
+    <div className="app-shell">
       <Header />
       <Navigation activeView={activeView} onViewChange={setActiveView} />
-      <main className="app-main" style={styles.mainContent}>{renderView()}</main>
+      <main className="app-main">{renderView()}</main>
     </div>
   );
 };
-const styles = {
-  mainContent: { maxWidth: 1200, margin: "0 auto", padding: "0 20px 24px" },
-}; 
 
 export default Layout;
-

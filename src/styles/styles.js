@@ -4,20 +4,24 @@
 // ========== COLOR PALETTES ==========
 export const THEME_COLORS = {
   sender: {
-    primary: '#3b82f6', // Modern blue
-    primaryHover: '#2563eb',
-    primaryLight: '#dbeafe',
-    primaryDark: '#1e40af',
-    gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-    shadow: '0 10px 40px rgba(59, 130, 246, 0.3)'
+    primary: '#f05b3f',
+    primaryHover: '#d9472e',
+    primaryLight: '#fff0ed',
+    light: '#fff0ed',
+    border: '#f5c8bf',
+    primaryDark: '#9f301f',
+    gradient: 'linear-gradient(135deg, #f05b3f 0%, #d9472e 100%)',
+    shadow: '0 10px 32px rgba(240, 91, 63, 0.22)'
   },
   traveler: {
-    primary: '#10b981', // Modern emerald
-    primaryHover: '#059669',
-    primaryLight: '#d1fae5',
-    primaryDark: '#047857',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    shadow: '0 10px 40px rgba(16, 185, 129, 0.3)'
+    primary: '#1a8e89',
+    primaryHover: '#14736f',
+    primaryLight: '#eaf8f6',
+    light: '#eaf8f6',
+    border: '#b9dedb',
+    primaryDark: '#0d5552',
+    gradient: 'linear-gradient(135deg, #1a8e89 0%, #14736f 100%)',
+    shadow: '0 10px 32px rgba(26, 142, 137, 0.22)'
   },
   neutral: {
     white: '#ffffff',

@@ -60,7 +60,7 @@ const ActivityView = () => {
     }
 
     return myPosts.map(post => (
-      <div key={post.id} style={styles.activityCard}>
+      <article className="activity-card" key={post.id} style={styles.activityCard}>
         <div style={styles.cardHeader}>
           <div>
             <h3 style={styles.cardTitle}>
@@ -115,7 +115,7 @@ const ActivityView = () => {
             </>
           )}
         </div>
-      </div>
+      </article>
     ));
   };
 
@@ -139,7 +139,7 @@ const ActivityView = () => {
       );
 
       return (
-        <div key={transaction.id} style={styles.activityCard}>
+        <article className="activity-card" key={transaction.id} style={styles.activityCard}>
           <div style={styles.cardHeader}>
             <div>
               <h3 style={styles.cardTitle}>{ITEM_TYPE_LABELS[transaction.itemType]}</h3>
@@ -258,14 +258,14 @@ const ActivityView = () => {
               </button>
             )}
           </div>
-        </div>
+        </article>
       );
     });
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.tabs}>
+    <div className="activity-view" style={styles.container}>
+      <div className="activity-tabs" style={styles.tabs}>
         <button
           style={{
             ...styles.tab,
