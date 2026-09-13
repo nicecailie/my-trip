@@ -1,31 +1,17 @@
 import React from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { styles} from '../../styles/styles';
 
 const Navigation = ({ activeView, onViewChange }) => {
-  const { getTheme } = useAuth();
-  const theme = getTheme();
-
   const navItems = [
-    { id: "feed", label: "🏠 Feed" },
-    { id: "activity", label: "📋 My Activity" },
-    { id: "chat", label: "💬 Messages" },
+    { id: "feed", label: "Discover" },
+    { id: "activity", label: "My activity" },
+    { id: "chat", label: "Messages" },
   ];
 
   return (
-    <nav style={styles.nav}>
-      <div style={styles.navContainer}>
+    <nav className="app-navigation" aria-label="Primary navigation">
+      <div className="nav-container">
         {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onViewChange(item.id)}
-            style={{
-              ...styles.navButton,
-              ...(activeView === item.id
-                ? { ...styles.activeNavButton, color: theme.primary, borderBottomColor: theme.primary }
-                : {}),
-            }}
-          >
+          <button key={item.id} className={activeView === item.id ? "nav-button active" : "nav-button"} onClick={() => onViewChange(item.id)} aria-current={activeView === item.id ? "page" : undefined}>
             {item.label}
           </button>
         ))}

@@ -69,7 +69,8 @@ const RequestCard = ({ request, onHelp }) => {
     : { ...styles.button, backgroundColor: theme.primary, color: "white" };
 
   return (
-    <div
+    <article
+  className="market-card request-card"
   style={styles.card}
   onMouseEnter={(e) => {
     e.currentTarget.style.transform = "translateY(-4px)";
@@ -99,10 +100,10 @@ const RequestCard = ({ request, onHelp }) => {
         </div>
       </div>
 
-      <div style={styles.route}>
-        <span>{(request.from || "").split(",")[0]}</span>
-        <span style={styles.arrow}>→</span>
-        <span>{(request.to || "").split(",")[0]}</span>
+      <div className="route-line" style={styles.route}>
+        <span><small>FROM</small>{(request.from || "").split(",")[0]}</span>
+        <span className="route-track" aria-hidden="true"><i /></span>
+        <span><small>TO</small>{(request.to || "").split(",")[0]}</span>
       </div>
 
       <div style={styles.details}>
@@ -124,14 +125,14 @@ const RequestCard = ({ request, onHelp }) => {
         )}
       </div>
 
-      <button
+      <button className="card-action"
         onClick={handleOfferHelp}
         disabled={alreadySent || offerSentFlash}
         style={buttonStyle}
       >
         {buttonText}
       </button>
-    </div>
+    </article>
   );
 };
 

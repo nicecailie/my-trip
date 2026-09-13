@@ -18,6 +18,7 @@ const profileFallback = (user) => ({
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   const hydrateUser = useCallback(async (authUser) => {
     if (!authUser || !supabase) {
@@ -25,14 +26,10 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const [{ data: profile, error: profileError }, { data: contact, error: contactError }] =
-      await Promise.all([
-        supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
-        supabase.from("profile_contacts").select("phone").eq("user_id", authUser.id).maybeSingle(),
-      ]);
-
-    if (profileError) console.warn("Could not load Supabase profile:", profileError.message);
-    if (contactError) console.warn("Could not load Supabase contact:", contactError.message);
+    const [{ data: profile }, { data: contact }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
+      supabase.from("profile_contacts").select("phone").eq("user_id", authUser.id).maybeSingle(),
+    ]);
 
     const fallback = profileFallback(authUser);
     setCurrentUser({
@@ -53,12 +50,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     let active = true;
+
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       hydrateUser(data.session?.user).finally(() => active && setIsLoading(false));
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
       window.setTimeout(() => {
         if (active) hydrateUser(session?.user).finally(() => active && setIsLoading(false));
       }, 0);
@@ -87,8 +86,12 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (error) return { success: false, error: error.message };
-    if (!data.user) return { success: false, error: "Supabase did not create the account." };
+    if (!data.user) {
+      return { success: false, error: "Supabase did not create the account. Please try again." };
+    }
 
+    // With email confirmation enabled, Supabase may hide an existing account by
+    // returning an obfuscated user with no identities instead of an error.
     if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       return {
         success: false,
@@ -99,21 +102,10 @@ export const AuthProvider = ({ children }) => {
     if (data.session) await hydrateUser(data.user);
     return {
       success: true,
+      userId: data.user.id,
       email: data.user.email,
       requiresEmailConfirmation: !data.session,
     };
-  };
-
-  const login = async (email, password) => {
-    if (!supabase) return { success: false, error: "Authentication is not configured yet." };
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (error) return { success: false, error: error.message };
-    await hydrateUser(data.user);
-    return { success: true };
   };
 
   const resendSignupConfirmation = async (email) => {
@@ -126,7 +118,21 @@ export const AuthProvider = ({ children }) => {
       email: normalizedEmail,
       options: { emailRedirectTo: window.location.origin },
     });
+
     return error ? { success: false, error: error.message } : { success: true };
+  };
+
+  const login = async (email, password) => {
+    if (!supabase) return { success: false, error: "Authentication is not configured yet." };
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (error) return { success: false, error: error.message };
+    await hydrateUser(data.user);
+    return { success: true };
   };
 
   const logout = async () => {
@@ -145,11 +151,33 @@ export const AuthProvider = ({ children }) => {
 
     const previousRole = currentUser.role;
     setCurrentUser((user) => ({ ...user, role: newRole }));
-    const { error } = await supabase.from("profiles").update({ active_role: newRole }).eq("id", currentUser.id);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ active_role: newRole })
+      .eq("id", currentUser.id);
+
     if (error) {
       setCurrentUser((user) => ({ ...user, role: previousRole }));
       return { success: false, error: error.message };
     }
+
+    return { success: true };
+  };
+
+  const requestPasswordReset = async (email) => {
+    if (!supabase) return { success: false, error: "Authentication is not configured yet." };
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: window.location.origin,
+    });
+    return error ? { success: false, error: error.message } : { success: true };
+  };
+
+  const updatePassword = async (password) => {
+    if (!supabase) return { success: false, error: "Authentication is not configured yet." };
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { success: false, error: error.message };
+    setRecoveryMode(false);
     return { success: true };
   };
 
@@ -163,14 +191,18 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     switchRole,
+    requestPasswordReset,
     resendSignupConfirmation,
+    updatePassword,
+    cancelRecovery: () => setRecoveryMode(false),
+    recoveryMode,
     isLoading,
     isAuthConfigured: isSupabaseConfigured,
     isSender,
     isTraveler,
     getTheme,
     isAuthenticated: Boolean(currentUser),
-  }), [currentUser, isLoading]);
+  }), [currentUser, isLoading, recoveryMode]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -74,7 +74,8 @@ const TravelerCard = ({ trip, onSendRequest }) => {
     : { ...styles.button, backgroundColor: theme.primary, color: "white" };
 
   return (
-    <div
+    <article
+  className="market-card traveler-card"
   style={styles.card}
   onMouseEnter={(e) => {
     e.currentTarget.style.transform = "translateY(-4px)";
@@ -106,10 +107,10 @@ const TravelerCard = ({ trip, onSendRequest }) => {
         </div>
       </div>
 
-      <div style={styles.route}>
-        <span>{(trip.from || "").split(",")[0]}</span>
-        <span style={styles.arrow}>→</span>
-        <span>{(trip.to || "").split(",")[0]}</span>
+      <div className="route-line" style={styles.route}>
+        <span><small>FROM</small>{(trip.from || "").split(",")[0]}</span>
+        <span className="route-track" aria-hidden="true"><i /></span>
+        <span><small>TO</small>{(trip.to || "").split(",")[0]}</span>
       </div>
 
       <div style={styles.details}>
@@ -135,14 +136,14 @@ const TravelerCard = ({ trip, onSendRequest }) => {
         )}
       </div>
 
-      <button
+      <button className="card-action"
         onClick={handleSend}
         disabled={alreadySent || requestSentFlash}
         style={buttonStyle}
       >
         {buttonText}
       </button>
-    </div>
+    </article>
   );
 };
 

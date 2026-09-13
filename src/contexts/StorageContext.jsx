@@ -42,8 +42,11 @@ const persistStored = (key, value) => {
   }
 };
 
+const loadPublicUsers = () =>
+  loadStored("users", seedData.users).map(({ password: _removedPassword, ...user }) => user);
+
 export const StorageProvider = ({ children }) => {
-  const [users, setUsers] = useState(() => loadStored("users", seedData.users));
+  const [users] = useState(loadPublicUsers);
   const [requests, setRequests] = useState(() => loadStored("requests", seedData.requests));
   const [trips, setTrips] = useState(() => loadStored("trips", seedData.trips));
   //New
@@ -58,27 +61,7 @@ export const StorageProvider = ({ children }) => {
   useEffect(() => persistStored("transactions", transactions), [transactions]);
   useEffect(() => persistStored("messages", messages), [messages]);
 
-  const createUser = (userData) => {
-    const newUser = {
-      id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      rating: 5.0,
-      completedDeliveries: 0,
-      ...userData,
-    };
-    setUsers((prev) => [...prev, newUser]);
-    return newUser;
-  };
-
   const getUserById = (userId) => users.find((u) => u.id === userId);
-  const getUserByEmail = (email) =>
-    users.find((u) => u.email?.toLowerCase() === email?.toLowerCase());
-
-  const updateUser = (userId, updates) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, ...updates } : u))
-    );
-  };
 
   // =============REQUESTS================
   const createRequest = (requestData) => {
@@ -257,10 +240,7 @@ export const StorageProvider = ({ children }) => {
 
     const value = {
     users,
-    createUser,
     getUserById,
-    getUserByEmail,
-    updateUser,
 
     requests,
     createRequest,

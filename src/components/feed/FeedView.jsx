@@ -95,25 +95,25 @@ const FeedView = () => {
   };
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerText}>
-          <h2 style={styles.title}>
-            {isSender() ? "🧳 Available Travelers" : "📦 Delivery Requests"}
-          </h2>
-          <p style={styles.subtitle}>
+    <div className="feed-view">
+      <div className="feed-header">
+        <div>
+          <span className="eyebrow">{isSender() ? "Find a travel match" : "Make your trip count"}</span>
+          <h1>
+            {isSender() ? "Travelers on your route" : "Items heading your way"}
+          </h1>
+          <p>
             {isSender()
-              ? "Find travelers going your route"
-              : "Help someone with their delivery"}
+              ? "Compare upcoming journeys and contact the right traveler."
+              : "Browse requests that fit your route and available luggage space."}
           </p>
         </div>
 
         <button
           onClick={() => setShowCreateForm(true)}
-          style={{ ...styles.createButton, backgroundColor: theme.primary }}
+          className="primary-action feed-create"
         >
-          + {isSender() ? "Post Request" : "Post Trip"}
+          <span aria-hidden="true">+</span> {isSender() ? "Post a request" : "Post a trip"}
         </button>
       </div>
 
@@ -124,31 +124,31 @@ const FeedView = () => {
         theme={theme}
       />
 
-      <div style={styles.safetyNote}>
-        <span aria-hidden="true">🛡️</span>
-        <span><strong>Carry only what you inspect.</strong> Never accept sealed, unidentified, illegal, or airline-prohibited items. Customs rules always apply.</span>
+      <div className="safety-note">
+        <span className="safety-mark" aria-hidden="true">✓</span>
+        <span><strong>Inspect before you carry.</strong> Never accept sealed, unidentified, illegal, or airline-prohibited items. Customs rules always apply.</span>
       </div>
 
       {/* Results count */}
       {filteredItems.length > 0 && (
-        <div style={{ ...styles.resultsInfo, backgroundColor: theme.light, color: theme.primary }}>
-          Showing {filteredItems.length} {isSender() ? "traveler" : "request"}
+        <div className="results-info">
+          <span>{filteredItems.length}</span> {isSender() ? "traveler" : "request"}
           {filteredItems.length !== 1 ? "s" : ""}
           {hasActiveFilters ? " (filtered)" : ""}
         </div>
       )}
 
       {/* Grid */}
-      <div style={styles.grid}>
+      <div className="feed-grid">
         {filteredItems.length === 0 ? (
-          <div style={styles.emptyState}>
-            <div style={styles.emptyIcon}>{isSender() ? "🧳" : "📦"}</div>
-            <h3 style={styles.emptyTitle}>
+          <div className="empty-state">
+            <div className="empty-mark" aria-hidden="true">{isSender() ? "T" : "S"}</div>
+            <h3>
               {hasActiveFilters
                 ? "No results found"
                 : `No ${isSender() ? "travelers" : "requests"} yet`}
             </h3>
-            <p style={styles.emptyText}>
+            <p>
               {hasActiveFilters
                 ? "Try adjusting your filters"
                 : `Check back later or post your ${isSender() ? "request" : "trip"}`}
@@ -191,65 +191,3 @@ const FeedView = () => {
 };
 
 export default FeedView;
-
-const styles = {
-  container: { maxWidth: 1200, margin: "0 auto" },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    gap: 16,
-    flexWrap: "wrap",
-  },
-  headerText: { flex: 1 },
-  title: { fontSize: 28, fontWeight: "bold", margin: "0 0 8px 0", color: "#111827" },
-  subtitle: { fontSize: 15, color: "#6b7280", margin: 0 },
-
-  createButton: {
-    padding: "12px 24px",
-    fontSize: 15,
-    fontWeight: 600,
-    color: "white",
-    border: "none",
-    borderRadius: 8,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-
-  resultsInfo: {
-    padding: "12px 16px",
-    borderRadius: 8,
-    marginBottom: 16,
-    fontSize: 14,
-    fontWeight: 600,
-  },
-  safetyNote: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 10,
-    padding: "12px 14px",
-    marginBottom: 16,
-    border: "1px solid #fde68a",
-    borderRadius: 8,
-    backgroundColor: "#fffbeb",
-    color: "#78350f",
-    fontSize: 13,
-    lineHeight: 1.5,
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
-    gap: 20,
-  },
-
-  emptyState: {
-    gridColumn: "1 / -1",
-    textAlign: "center",
-    padding: "60px 20px",
-  },
-  emptyIcon: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: 600, margin: "0 0 8px 0", color: "#111827" },
-  emptyText: { fontSize: 15, color: "#6b7280", margin: 0 },
-};

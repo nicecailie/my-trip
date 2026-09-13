@@ -125,27 +125,27 @@ const FeedFilters = ({ isSender, onFilterChange, theme }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <section className="filter-panel" style={styles.container}>
+      <div className="filter-header" style={styles.header}>
         <h3 style={styles.title}>
-          🔍 Filter {isSender ? 'Travelers' : 'Requests'}
+          Refine your search
           {hasActiveFilters && (
             <span style={{...styles.badge, marginLeft: '12px'}}>
               {Object.values(filters).filter(v => v && v !== 'date').length} active
             </span>
           )}
         </h3>
-        <button 
+        <button className="filter-toggle"
           onClick={() => setShowFilters(!showFilters)} 
           style={styles.toggleButton}
         >
-          {showFilters ? '▲ Hide' : '▼ Show'} Filters
+          {showFilters ? 'Hide filters' : `Filter ${isSender ? 'travelers' : 'requests'}`}
         </button>
       </div>
 
       {showFilters && (
         <>
-          <div style={styles.filterGrid}>
+          <div className="filter-grid" style={styles.filterGrid}>
             {/* Route Filters */}
             <div style={styles.filterGroup}>
               <label style={styles.label}>From</label>
@@ -256,7 +256,7 @@ const FeedFilters = ({ isSender, onFilterChange, theme }) => {
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 };
 
