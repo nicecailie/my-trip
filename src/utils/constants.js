@@ -114,19 +114,21 @@ export const CHAT_PHASES = {
 
 
 export const THEME_COLORS = {
-  sender: {
-    primary: "#d95c3f",
-    primaryHover: "#b74630",
-    light: "#fff1ec",
-    medium: "#f4c8bb",
-    border: "#edb3a3",
+sender: {
+    primary: "#e3a33c",
+    primaryHover: "#bf7d18",
+    light: "#fff5dc",
+    medium: "#f4d79b",
+    border: "#eac879",
+    text: "#0c392a",
   },
   traveler: {
-    primary: "#1f766b",
-    primaryHover: "#16594f",
-    light: "#e8f4f1",
-    medium: "#bdded7",
-    border: "#9dccca",
+    primary: "#2f6b54",
+    primaryHover: "#184234",
+    light: "#e7f0ea",
+    medium: "#c3d8cc",
+    border: "#9ebdac",
+    text: "#ffffff",
   },
 };
 

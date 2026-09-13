@@ -11,11 +11,12 @@ Chagga is an Africa-first peer-to-peer delivery marketplace for routes within Af
 - Role switching from the same account
 - Route, date, item-type, and luggage-size filters
 - Shared Supabase trip and delivery-request posting
-- Shared match proposals with atomic accept and decline actions
-- Active-delivery status tracking
-- Recipient information and delivery confirmation
-- Transaction-based chat with image attachments
-- Browser persistence for the unfinished chat and transaction prototype
+- Shared match proposals with accept and decline actions
+- Shared one-to-one messaging with unread badges and message deletion
+- Simple delivery progress: accepted, in transit, dropped off, delivered, completed
+- Confirmation by both sender and traveler
+- Five-star ratings with an optional short comment
+- Basic profiles with pictures, activity counts, and manually entered usual routes
 - Production build with Vite
 
 ## Run locally
@@ -33,17 +34,18 @@ Then open the local address shown in the terminal.
 2. Run `supabase/migrations/202609060001_auth_profiles.sql` in the Supabase SQL Editor. If those tables already exist, do not run it again.
 3. Run `supabase/migrations/202609120001_repair_auth_profile_sync.sql` to recreate the Auth trigger and backfill existing users.
 4. Run `supabase/migrations/202609130001_marketplace_core.sql` to create shared trips, requests, match proposals, and their row-level security policies.
-5. Copy `.env.example` to `.env.local`.
-6. Add your project URL and publishable key:
+5. Run `supabase/migrations/202609130002_mvp_delivery_chat_profiles.sql` to create shared deliveries, messages, ratings, unread state, and profile-picture storage.
+6. Copy `.env.example` to `.env.local`.
+7. Add your project URL and publishable key:
 
 ```env
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
-7. In Supabase Authentication URL settings, set the Site URL to your deployed address and add `http://localhost:5173` as a local redirect URL.
-8. Enable the Email provider and **Confirm email** in Authentication settings.
-9. Restart the Vite server after changing `.env.local`.
+8. In Supabase Authentication URL settings, set the Site URL to your deployed address and add `http://localhost:5173` as a local redirect URL.
+9. Enable the Email provider and **Confirm email** in Authentication settings.
+10. Restart the Vite server after changing `.env.local`.
 
 Supabase's default SMTP only sends test emails to pre-authorized project-team addresses. Configure custom SMTP before testing confirmation emails with other addresses.
 
@@ -61,6 +63,6 @@ The static production output is written to `build/`.
 
 ## Important production boundary
 
-Authentication, profiles, trips, delivery requests, and match proposals use Supabase. Transactions, messages, recipients, and uploads still use browser storage, so the post-match delivery workflow is only suitable for prototype testing and is not yet shared between devices.
+Authentication, profiles, trips, requests, match proposals, deliveries, messages, confirmations, and ratings use Supabase and are shared between signed-in users.
 
-Before a public launch, migrate the remaining post-match records to PostgreSQL and add identity verification, payments/escrow, moderation, prohibited-item controls, audit logs, notifications, and country-specific customs and insurance rules.
+The MVP intentionally leaves payment arrangements outside the platform. Identity verification, escrow, insurance, disputes, advanced tracking, and country-specific logistics remain later-stage features after demand is validated.
