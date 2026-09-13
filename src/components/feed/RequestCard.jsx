@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { useStorage } from "../../hooks/useStorage";
 import { useAuth } from "../../hooks/useAuth";
 import { ITEM_TYPE_LABELS, SIZE_LABELS } from "../../utils/constants";
+import Icon from "../common/Icon";
 
 const RequestCard = ({ request, onHelp }) => {
   const { getUserById, createMatchRequest, getOutgoingMatchRequests } = useStorage();
@@ -20,11 +21,11 @@ const RequestCard = ({ request, onHelp }) => {
 
   const alreadySent = outgoing.some((mr) => mr.requestId === request.id && mr.status === "pending");
 
-  const handleOfferHelp = () => {
+  const handleOfferHelp = async () => {
     // If parent passed a handler (FeedView), use it.
     // Otherwise, handle here (recommended).
     if (onHelp) {
-      onHelp(request);
+      await onHelp(request);
       return;
     }
 
@@ -33,7 +34,7 @@ const RequestCard = ({ request, onHelp }) => {
       return;
     }
 
-    const result = createMatchRequest({
+    const result = await createMatchRequest({
       senderId: request.senderId,
       travelerId: currentUser.id,
       requestId: request.id,
@@ -57,7 +58,7 @@ const RequestCard = ({ request, onHelp }) => {
   };
 
   const buttonText = offerSentFlash
-    ? "✓ Offer Sent!"
+    ? "Offer sent"
     : alreadySent
     ? "Offer Pending"
     : "I Can Help";
@@ -85,13 +86,13 @@ const RequestCard = ({ request, onHelp }) => {
       <div style={styles.header}>
         <div style={styles.itemInfo}>
           <h3 style={styles.itemType}>
-            📦 {ITEM_TYPE_LABELS[request.itemType]}
+            <Icon name="box" size={19} /> {ITEM_TYPE_LABELS[request.itemType]}
           </h3>
 
           <div style={styles.senderInfo}>
             <span>{sender?.name || "Sender"}</span>
             <span style={styles.dot}>•</span>
-            <span>⭐ {sender?.rating?.toFixed(1) || "5.0"}</span>
+            <span className="rating-with-icon"><Icon name="star" size={14} /> {sender?.rating?.toFixed(1) || "5.0"}</span>
           </div>
         </div>
 

@@ -330,7 +330,7 @@ const ChatView = () => {
     if (transactions.length === 0) {
       return (
         <div style={styles.emptyState}>
-          <div style={{ fontSize: 44 }}>💬</div>
+          <div style={{ fontSize: 14, fontWeight: 800 }}>Messages</div>
           <div style={styles.emptyTitle}>No {isSender() ? 'sender' : 'traveler'} chats</div>
           <div style={styles.emptyText}>
             Your {isSender() ? 'sender' : 'traveler'} conversations will appear here
@@ -366,7 +366,7 @@ const ChatView = () => {
               </div>
               <div style={styles.convoPreview}>
                 {lastMsg?.type === 'image' 
-                  ? '📷 Photo' 
+                  ? 'Photo'
                   : lastMsg?.text 
                   ? truncate(lastMsg.text, 60) 
                   : 'No messages yet'}
@@ -382,7 +382,7 @@ const ChatView = () => {
     if (!selectedTransaction) {
       return (
         <div style={styles.rightEmpty}>
-          <div style={{ fontSize: 44 }}>💬</div>
+          <div style={{ fontSize: 14, fontWeight: 800 }}>Messages</div>
           <div style={styles.emptyTitle}>Select a conversation</div>
           <div style={styles.emptyText}>Pick one on the left to start chatting</div>
         </div>
@@ -410,7 +410,7 @@ const ChatView = () => {
           </div>
 
           <div style={styles.rolePill}>
-            {isSender() ? '📦 Sender Chat' : '🧳 Traveler Chat'}
+            {isSender() ? 'Sender chat' : 'Traveler chat'}
           </div>
         </div>
 
@@ -437,7 +437,7 @@ const ChatView = () => {
                       {msg.text && <div style={{ marginBottom: '8px' }}>{msg.text}</div>}
                       <img src={msg.imageData} alt={msg.imageName} style={styles.image} />
                       <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.8 }}>
-                        📷 {msg.imageName}
+                        Photo: {msg.imageName}
                       </div>
                     </>
                   ) : (
@@ -465,7 +465,7 @@ const ChatView = () => {
             style={styles.photoButton}
             title="Upload photo"
           >
-            📷
+            Photo
           </button>
 
           <textarea
@@ -504,7 +504,7 @@ const ChatView = () => {
           <div style={styles.headerTop}>
             <span style={styles.headerTitle}>Messages</span>
             <span style={styles.roleIndicator}>
-              {isSender() ? '📦 Sender' : '🧳 Traveler'}
+              {isSender() ? 'Sender' : 'Traveler'}
             </span>
           </div>
           <div style={{ fontSize: '12px', color: '#6b7280' }}>

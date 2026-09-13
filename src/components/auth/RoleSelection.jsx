@@ -72,8 +72,8 @@ const RoleSelection = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.logo}>✈️ MyTrip</h1>
-        <h2 style={styles.title}>Welcome! How will you use MyTrip?</h2>
+        <h1 style={styles.logo}>Chagga</h1>
+        <h2 style={styles.title}>Welcome! How will you use Chagga?</h2>
         <p style={styles.subtitle}>
           Connect senders and travelers for peer-to-peer delivery
         </p>
@@ -84,7 +84,7 @@ const RoleSelection = () => {
             onClick={() => handleRoleSelect(ROLES.SENDER)}
             style={styles.roleCard}
           >
-            <div style={styles.roleIcon}>📦</div>
+            <div style={styles.roleIcon}>Send</div>
             <h3 style={styles.roleTitle}>I'm a Sender</h3>
             <p style={styles.roleDescription}>
               I need someone to deliver an item for me
@@ -101,7 +101,7 @@ const RoleSelection = () => {
             onClick={() => handleRoleSelect(ROLES.TRAVELER)}
             style={styles.roleCard}
           >
-            <div style={styles.roleIcon}>🧳</div>
+            <div style={styles.roleIcon}>Travel</div>
             <h3 style={styles.roleTitle}>I'm a Traveler</h3>
             <p style={styles.roleDescription}>
               I'm traveling and can carry items

@@ -25,7 +25,7 @@ export const AddRecipientModal = ({ transaction, onClose }) => {
       recipientAddedAt: new Date().toISOString()
     });
 
-    alert('✅ Recipient added successfully!');
+    alert('Recipient added successfully.');
     onClose();
   };
 
@@ -201,11 +201,11 @@ export const DeliveryStatusTracker = ({ transaction }) => {
   const theme = getTheme();
 
   const statuses = [
-    { key: 'created', label: 'Match Created', icon: '🤝' },
-    { key: 'dropped_off', label: 'Item Dropped Off', icon: '📦' },
-    { key: 'in_transit', label: 'In Transit', icon: '✈️' },
-    { key: 'arrived', label: 'Traveler Arrived', icon: '🛬' },
-    { key: 'delivered', label: 'Delivered', icon: '✅' }
+    { key: 'created', label: 'Match Created', icon: '1' },
+    { key: 'dropped_off', label: 'Item Dropped Off', icon: '2' },
+    { key: 'in_transit', label: 'In Transit', icon: '3' },
+    { key: 'arrived', label: 'Traveler Arrived', icon: '4' },
+    { key: 'delivered', label: 'Delivered', icon: '5' }
   ];
 
   const currentIndex = statuses.findIndex(s => s.key === transaction.status);

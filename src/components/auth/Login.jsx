@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { ROLES } from '../../utils/constants';
+import ChaggaLogo from '../common/ChaggaLogo';
+import Icon from '../common/Icon';
 
 const BrandMark = () => (
-  <div className="brand-lockup" aria-label="MyTrip">
-    <span className="brand-mark" aria-hidden="true">M</span>
-    <span>MyTrip</span>
-  </div>
+  <div className="brand-lockup" aria-label="Chagga"><ChaggaLogo /></div>
 );
 
 const AuthShell = ({ children }) => (
   <main className="auth-shell">
-    <section className="auth-story" aria-label="About MyTrip">
+    <section className="auth-story" aria-label="About Chagga">
       <img className="auth-story-image" src="/assets/accra-traveler.jpg" alt="Traveler moving through Accra airport with luggage" />
       <div className="auth-story-shade" />
       <div className="auth-story-top"><BrandMark /></div>
@@ -54,7 +53,7 @@ const LoginSignup = () => {
         setError('Please fill all required fields.'); setLoading(false); return;
       }
       if (!selectedRole) {
-        setError('Choose how you want to use MyTrip.'); setLoading(false); return;
+        setError('Choose how you want to use Chagga.'); setLoading(false); return;
       }
       if (form.password.length < 8) {
         setError('Use at least 8 characters for your password.'); setLoading(false); return;
@@ -100,7 +99,7 @@ const LoginSignup = () => {
           <button className="text-button back-link" onClick={() => { setIsForgotPassword(false); clearNotices(); }}>← Back to sign in</button>
           <span className="eyebrow">Account recovery</span>
           <h2>Reset your password</h2>
-          <p className="auth-intro">Enter the email you use for MyTrip. We’ll send you a secure reset link.</p>
+          <p className="auth-intro">Enter the email you use for Chagga. We’ll send you a secure reset link.</p>
           {error && <div className="notice notice-error" role="alert">{error}</div>}
           {message && <div className="notice notice-success" role="status">{message}</div>}
           <form onSubmit={handlePasswordReset} className="auth-form">
@@ -120,16 +119,16 @@ const LoginSignup = () => {
         <div className="auth-panel role-panel">
           <div className="mobile-brand"><BrandMark /></div>
           <span className="eyebrow">Create an account</span>
-          <h2>How will you use MyTrip?</h2>
+          <h2>How will you use Chagga?</h2>
           <p className="auth-intro">Choose a starting mode. You can switch at any time.</p>
           <div className="role-options">
             <button className="role-option" onClick={() => setSelectedRole(ROLES.SENDER)}>
-              <span className="role-glyph" aria-hidden="true">S</span>
+              <span className="role-glyph" aria-hidden="true"><Icon name="box" /></span>
               <span className="role-copy"><strong>Send an item</strong><small>Find someone already traveling your route.</small></span>
               <span className="role-arrow" aria-hidden="true">→</span>
             </button>
             <button className="role-option" onClick={() => setSelectedRole(ROLES.TRAVELER)}>
-              <span className="role-glyph traveler" aria-hidden="true">T</span>
+              <span className="role-glyph traveler" aria-hidden="true"><Icon name="bag" /></span>
               <span className="role-copy"><strong>Travel with space</strong><small>Earn a little by carrying approved items.</small></span>
               <span className="role-arrow" aria-hidden="true">→</span>
             </button>
@@ -145,7 +144,7 @@ const LoginSignup = () => {
       <div className="auth-panel compact-panel">
         <div className="mobile-brand"><BrandMark /></div>
         <span className="eyebrow">{isLogin ? 'Welcome back' : selectedRole === ROLES.SENDER ? 'Sender account' : 'Traveler account'}</span>
-        <h2>{isLogin ? 'Sign in to MyTrip' : 'Create your account'}</h2>
+        <h2>{isLogin ? 'Sign in to Chagga' : 'Create your account'}</h2>
         <p className="auth-intro">{isLogin ? 'Pick up where you left off.' : 'Your next connection starts with a trusted profile.'}</p>
         {error && <div className="notice notice-error" role="alert">{error}</div>}
         {message && <div className="notice notice-success" role="status">{message}</div>}
@@ -172,7 +171,7 @@ const LoginSignup = () => {
           <button className="primary-action" type="submit" disabled={loading || !isAuthConfigured}>{loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}</button>
         </form>
         {!isLogin && <button className="text-button back-link centered" onClick={() => setSelectedRole(null)}>← Change account type</button>}
-        <p className="auth-switch">{isLogin ? 'New to MyTrip?' : 'Already a member?'} <button className="text-button" onClick={switchAuthMode}>{isLogin ? 'Create an account' : 'Sign in'}</button></p>
+        <p className="auth-switch">{isLogin ? 'New to Chagga?' : 'Already a member?'} <button className="text-button" onClick={switchAuthMode}>{isLogin ? 'Create an account' : 'Sign in'}</button></p>
         <p className="terms-note">By continuing, you agree to carry only inspected and permitted items.</p>
       </div>
     </AuthShell>

@@ -7,7 +7,7 @@ export const AuthContext = createContext(null);
 const profileFallback = (user) => ({
   id: user.id,
   email: user.email,
-  name: user.user_metadata?.full_name || user.email?.split("@")[0] || "MyTrip member",
+  name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Chagga member",
   phone: user.user_metadata?.phone || "",
   role: user.user_metadata?.role || ROLES.SENDER,
   rating: 5,

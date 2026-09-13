@@ -48,7 +48,7 @@ const ActivityView = () => {
     if (myPosts.length === 0) {
       return (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>{isSender() ? '📦' : '🧳'}</div>
+          <div style={styles.emptyIcon}>{isSender() ? 'Request' : 'Trip'}</div>
           <h3 style={styles.emptyTitle}>No posts yet</h3>
           <p style={styles.emptyText}>
             {isSender()
@@ -65,8 +65,8 @@ const ActivityView = () => {
           <div>
             <h3 style={styles.cardTitle}>
               {isSender()
-                ? `📦 ${ITEM_TYPE_LABELS[post.itemType]}`
-                : `🧳 Trip to ${post.to.split(',')[0]}`}
+                ? ITEM_TYPE_LABELS[post.itemType]
+                : `Trip to ${post.to.split(',')[0]}`}
             </h3>
 
             <div style={styles.cardRoute}>
@@ -123,7 +123,7 @@ const ActivityView = () => {
     if (activeDeliveries.length === 0) {
       return (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>🚚</div>
+          <div style={styles.emptyIcon}>Route</div>
           <h3 style={styles.emptyTitle}>No active deliveries</h3>
           <p style={styles.emptyText}>Your active deliveries will appear here</p>
         </div>
@@ -165,7 +165,7 @@ const ActivityView = () => {
             <div style={styles.detailItem}>
               <span style={styles.detailLabel}>{isSender() ? 'Traveler' : 'Sender'}</span>
               <span style={styles.detailValue}>
-                {otherUser?.name || 'Unknown'} ⭐ {otherUser?.rating?.toFixed(1) || '5.0'}
+                {otherUser?.name || 'Unknown'} · {otherUser?.rating?.toFixed(1) || '5.0'} rating
               </span>
             </div>
 
@@ -177,7 +177,7 @@ const ActivityView = () => {
             {transaction.recipientAdded && (
               <div style={styles.detailItem}>
                 <span style={styles.detailLabel}>Recipient</span>
-                <span style={styles.detailValue}>✅ {transaction.recipientName}</span>
+                <span style={styles.detailValue}>{transaction.recipientName}</span>
               </div>
             )}
           </div>

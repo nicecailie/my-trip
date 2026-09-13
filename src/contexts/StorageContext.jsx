@@ -1,284 +1,290 @@
-// src/contexts/StorageContext.jsx
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../lib/supabase";
 
 export const StorageContext = createContext(null);
 
-const futureDate = (daysFromNow) => {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromNow);
-  return date.toISOString().split("T")[0];
-};
-
-const seedData = {
-  users: [
-    { id: "demo_traveler_amina", name: "Amina Kamau", email: "amina@example.com", role: "traveler", rating: 4.9, completedDeliveries: 18, createdAt: new Date().toISOString() },
-    { id: "demo_traveler_moussa", name: "Moussa Diallo", email: "moussa@example.com", role: "traveler", rating: 5, completedDeliveries: 11, createdAt: new Date().toISOString() },
-    { id: "demo_sender_esi", name: "Esi Agyeman", email: "esi@example.com", role: "sender", rating: 4.8, completedDeliveries: 7, createdAt: new Date().toISOString() },
-  ],
-  trips: [
-    { id: "demo_trip_1", travelerId: "demo_traveler_amina", travelerName: "Amina Kamau", from: "Nairobi, Kenya", to: "London, UK", travelDate: futureDate(7), availableSpace: "large", acceptedItems: ["documents", "clothes", "gifts"], deliveryArea: "Central London", status: "available", createdAt: new Date().toISOString(), receivedRequests: [] },
-    { id: "demo_trip_2", travelerId: "demo_traveler_moussa", travelerName: "Moussa Diallo", from: "Paris, France", to: "Dakar, Senegal", travelDate: futureDate(12), availableSpace: "medium", acceptedItems: ["documents", "electronics"], deliveryArea: "Dakar Plateau", status: "available", createdAt: new Date().toISOString(), receivedRequests: [] },
-  ],
-  requests: [
-    { id: "demo_request_1", senderId: "demo_sender_esi", senderName: "Esi Agyeman", itemType: "documents", from: "Accra, Ghana", to: "Lagos, Nigeria", neededBy: futureDate(10), size: "small", description: "University documents in an open envelope for inspection.", status: "pending", createdAt: new Date().toISOString(), interestedTravelers: [] },
-    { id: "demo_request_2", senderId: "demo_sender_esi", senderName: "Esi Agyeman", itemType: "clothes", from: "London, UK", to: "Nairobi, Kenya", neededBy: futureDate(18), size: "medium", description: "A small set of new baby clothes with receipts.", status: "pending", createdAt: new Date().toISOString(), interestedTravelers: [] },
-  ],
-};
-
-const loadStored = (key, fallback) => {
+const loadStored = (key) => {
   try {
-    const stored = localStorage.getItem(`mytrip_${key}`);
-    return stored ? JSON.parse(stored) : fallback;
+    const stored = localStorage.getItem(`chagga_${key}`);
+    return stored ? JSON.parse(stored) : [];
   } catch {
-    return fallback;
+    return [];
   }
 };
 
 const persistStored = (key, value) => {
   try {
-    localStorage.setItem(`mytrip_${key}`, JSON.stringify(value));
+    localStorage.setItem(`chagga_${key}`, JSON.stringify(value));
   } catch (error) {
     console.warn(`Could not persist ${key}:`, error);
   }
 };
 
-const loadPublicUsers = () =>
-  loadStored("users", seedData.users).map(({ password: _removedPassword, ...user }) => user);
+const mapProfile = (profile) => ({
+  id: profile.id,
+  name: profile.full_name,
+  role: profile.active_role,
+  rating: Number(profile.rating ?? 5),
+  completedDeliveries: profile.completed_deliveries ?? 0,
+  verificationStatus: profile.verification_status,
+});
+
+const mapTrip = (trip, names = {}) => ({
+  id: trip.id,
+  travelerId: trip.traveler_id,
+  travelerName: names[trip.traveler_id] || "Chagga traveler",
+  from: trip.from_location,
+  to: trip.to_location,
+  travelDate: trip.travel_date,
+  availableSpace: trip.available_space,
+  acceptedItems: trip.accepted_items || [],
+  deliveryArea: trip.delivery_area || "",
+  status: trip.status,
+  createdAt: trip.created_at,
+});
+
+const mapRequest = (request, names = {}) => ({
+  id: request.id,
+  senderId: request.sender_id,
+  senderName: names[request.sender_id] || "Chagga sender",
+  itemType: request.item_type,
+  from: request.from_location,
+  to: request.to_location,
+  neededBy: request.needed_by,
+  size: request.size,
+  description: request.description || "",
+  status: request.status,
+  createdAt: request.created_at,
+});
+
+const mapProposal = (proposal, names = {}) => ({
+  id: proposal.id,
+  senderId: proposal.sender_id,
+  travelerId: proposal.traveler_id,
+  senderName: names[proposal.sender_id] || "Sender",
+  travelerName: names[proposal.traveler_id] || "Traveler",
+  tripId: proposal.trip_id,
+  requestId: proposal.request_id,
+  proposedBy: proposal.proposed_by,
+  type: proposal.proposal_type,
+  from: proposal.from_location,
+  to: proposal.to_location,
+  itemType: proposal.item_type,
+  status: proposal.status,
+  createdAt: proposal.created_at,
+  respondedAt: proposal.responded_at,
+});
 
 export const StorageProvider = ({ children }) => {
-  const [users] = useState(loadPublicUsers);
-  const [requests, setRequests] = useState(() => loadStored("requests", seedData.requests));
-  const [trips, setTrips] = useState(() => loadStored("trips", seedData.trips));
-  //New
-  const [matchRequests, setMatchRequests] = useState(() => loadStored("match_requests", []));
-  const [transactions, setTransactions] = useState(() => loadStored("transactions", []));
-  const [messages, setMessages] = useState(() => loadStored("messages", []));
+  const { currentUser } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [matchRequests, setMatchRequests] = useState([]);
+  const [transactions, setTransactions] = useState(() => loadStored("transactions"));
+  const [messages, setMessages] = useState(() => loadStored("messages"));
+  const [isMarketplaceLoading, setIsMarketplaceLoading] = useState(false);
+  const [marketplaceError, setMarketplaceError] = useState("");
 
-  useEffect(() => persistStored("users", users), [users]);
-  useEffect(() => persistStored("requests", requests), [requests]);
-  useEffect(() => persistStored("trips", trips), [trips]);
-  useEffect(() => persistStored("match_requests", matchRequests), [matchRequests]);
   useEffect(() => persistStored("transactions", transactions), [transactions]);
   useEffect(() => persistStored("messages", messages), [messages]);
 
-  const getUserById = (userId) => users.find((u) => u.id === userId);
+  const refreshMarketplace = useCallback(async () => {
+    if (!supabase || !currentUser) {
+      setUsers(currentUser ? [currentUser] : []);
+      setRequests([]);
+      setTrips([]);
+      setMatchRequests([]);
+      return;
+    }
 
-  // =============REQUESTS================
-  const createRequest = (requestData) => {
-    const newRequest = {
-      id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      interestedTravelers: [],
-      ...requestData,
-    };
-    setRequests((prev) => [...prev, newRequest]);
-    return newRequest;
+    setIsMarketplaceLoading(true);
+    setMarketplaceError("");
+    const [profilesResult, tripsResult, requestsResult, proposalsResult] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, active_role, rating, completed_deliveries, verification_status"),
+      supabase.from("trips").select("*").order("travel_date", { ascending: true }),
+      supabase.from("delivery_requests").select("*").order("needed_by", { ascending: true }),
+      supabase.from("match_proposals").select("*").order("created_at", { ascending: false }),
+    ]);
+
+    const failedResult = [profilesResult, tripsResult, requestsResult, proposalsResult].find((result) => result.error);
+    if (failedResult) {
+      setMarketplaceError(failedResult.error.message);
+      setIsMarketplaceLoading(false);
+      return;
+    }
+
+    const publicUsers = profilesResult.data.map(mapProfile);
+    const names = Object.fromEntries(publicUsers.map((user) => [user.id, user.name]));
+    setUsers(publicUsers);
+    setTrips(tripsResult.data.map((trip) => mapTrip(trip, names)));
+    setRequests(requestsResult.data.map((request) => mapRequest(request, names)));
+    setMatchRequests(proposalsResult.data.map((proposal) => mapProposal(proposal, names)));
+    setIsMarketplaceLoading(false);
+  }, [currentUser]);
+
+  useEffect(() => { refreshMarketplace(); }, [refreshMarketplace]);
+
+  const getUserById = (userId) => users.find((user) => user.id === userId) || (currentUser?.id === userId ? currentUser : null);
+
+  const createRequest = async (requestData) => {
+    if (!supabase || !currentUser) throw new Error("Sign in before posting a request.");
+    const { data, error } = await supabase.from("delivery_requests").insert({
+      sender_id: currentUser.id,
+      item_type: requestData.itemType,
+      from_location: requestData.from,
+      to_location: requestData.to,
+      needed_by: requestData.neededBy,
+      size: requestData.size,
+      description: requestData.description?.trim() || null,
+    }).select().single();
+    if (error) throw error;
+    const request = mapRequest(data, { [currentUser.id]: currentUser.name });
+    setRequests((previous) => [...previous, request]);
+    return request;
   };
 
-  const getRequestById = (requestId) => requests.find((r) => r.id === requestId);
-
-  const updateRequest = (requestId, updates) => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === requestId ? { ...r, ...updates } : r)));
-};
-
-  const getRequestsBySender = (userId) => requests.filter((r) => r.senderId === userId);
-  const getActiveRequests = () => requests.filter((r) => r.status === "pending");
-
-  const createTrip = (tripData) => {
-    const newTrip = {
-      id: `trip_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      status: "available",
-      createdAt: new Date().toISOString(),
-      receivedRequests: [],
-      ...tripData,
-    };
-    setTrips((prev) => [...prev, newTrip]);
-    return newTrip;
+  const updateRequest = async (requestId, updates) => {
+    const databaseUpdates = {};
+    if (updates.status) databaseUpdates.status = updates.status;
+    const { error } = await supabase.from("delivery_requests").update(databaseUpdates).eq("id", requestId);
+    if (error) throw error;
+    setRequests((previous) => previous.map((request) => request.id === requestId ? { ...request, ...updates } : request));
   };
 
-  const updateTrip = (tripId, updates) => {
-    setTrips((prev) =>
-      prev.map((t) => (t.id === tripId ? { ...t, ...updates } : t))
-    );
+  const getRequestById = (requestId) => requests.find((request) => request.id === requestId);
+  const getRequestsBySender = (userId) => requests.filter((request) => request.senderId === userId);
+  const getActiveRequests = () => requests.filter((request) => request.status === "pending");
+
+  const createTrip = async (tripData) => {
+    if (!supabase || !currentUser) throw new Error("Sign in before posting a trip.");
+    const { data, error } = await supabase.from("trips").insert({
+      traveler_id: currentUser.id,
+      from_location: tripData.from,
+      to_location: tripData.to,
+      travel_date: tripData.travelDate,
+      available_space: tripData.availableSpace,
+      accepted_items: tripData.acceptedItems,
+      delivery_area: tripData.deliveryArea?.trim() || null,
+    }).select().single();
+    if (error) throw error;
+    const trip = mapTrip(data, { [currentUser.id]: currentUser.name });
+    setTrips((previous) => [...previous, trip]);
+    return trip;
   };
 
-  const getTripById = (tripId) => trips.find((t) => t.id === tripId);
-  const getTripsByTraveler = (userId) => trips.filter((t) => t.travelerId === userId);
-  const getActiveTrips = () => trips.filter((t) => t.status === "available");
+  const updateTrip = async (tripId, updates) => {
+    const databaseUpdates = {};
+    if (updates.status) databaseUpdates.status = updates.status;
+    const { error } = await supabase.from("trips").update(databaseUpdates).eq("id", tripId);
+    if (error) throw error;
+    setTrips((previous) => previous.map((trip) => trip.id === tripId ? { ...trip, ...updates } : trip));
+  };
 
+  const getTripById = (tripId) => trips.find((trip) => trip.id === tripId);
+  const getTripsByTraveler = (userId) => trips.filter((trip) => trip.travelerId === userId);
+  const getActiveTrips = () => trips.filter((trip) => trip.status === "available");
+
+  const createMatchRequest = async (proposalData) => {
+    if (!supabase || !currentUser) return { success: false, error: "Sign in before proposing a match." };
+    const { data, error } = await supabase.from("match_proposals").insert({
+      sender_id: proposalData.senderId,
+      traveler_id: proposalData.travelerId,
+      trip_id: proposalData.tripId || null,
+      request_id: proposalData.requestId || null,
+      proposed_by: currentUser.id,
+      proposal_type: proposalData.type,
+      from_location: proposalData.from,
+      to_location: proposalData.to,
+      item_type: proposalData.itemType,
+    }).select().single();
+
+    if (error) {
+      return { success: false, error: error.code === "23505" ? "You already have a pending proposal for this post." : error.message };
+    }
+
+    const names = Object.fromEntries(users.map((user) => [user.id, user.name]));
+    const matchRequest = mapProposal(data, names);
+    setMatchRequests((previous) => [matchRequest, ...previous]);
+    return { success: true, matchRequest };
+  };
+
+  const getIncomingMatchRequests = (userId) => matchRequests.filter(
+    (proposal) => proposal.status === "pending" && proposal.proposedBy !== userId &&
+      (proposal.senderId === userId || proposal.travelerId === userId)
+  );
+  const getOutgoingMatchRequests = (userId) => matchRequests.filter(
+    (proposal) => proposal.status === "pending" && proposal.proposedBy === userId
+  );
 
   const createTransaction = (transactionData) => {
-    const newTransaction = {
-      id: `txn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    const transaction = {
+      id: `txn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       status: "created",
       chatPhase: "negotiation",
       createdAt: new Date().toISOString(),
       participants: [transactionData.senderId, transactionData.travelerId],
       recipientId: null,
-      recipientName: "", 
+      recipientName: "",
       recipientEmail: "",
       recipientPhone: "",
       deliveryPhoto: "",
       photoUploadedAt: "",
-
       ...transactionData,
     };
-    setTransactions((prev) => [...prev, newTransaction]);
-
-    if (transactionData.requestId) updateRequest(transactionData.requestId, { status: "matched" });
-    if (transactionData.tripId) updateTrip(transactionData.tripId, { status: "matched" });
-
-    return newTransaction;
+    setTransactions((previous) => [...previous, transaction]);
+    return transaction;
   };
 
-  const getTransactionById = (transactionId) =>
-    transactions.find((t) => t.id === transactionId);
+  const respondToMatchRequest = async (matchRequestId, response) => {
+    const proposal = matchRequests.find((item) => item.id === matchRequestId);
+    if (!proposal) return { success: false, error: "Match proposal not found." };
+    const { error } = await supabase.rpc("respond_to_match_proposal", { proposal_id: matchRequestId, response });
+    if (error) return { success: false, error: error.message };
+    setMatchRequests((previous) => previous.map((item) => item.id === matchRequestId
+      ? { ...item, status: response, respondedAt: new Date().toISOString() }
+      : item));
 
-  const getTransactionsByUser = (userId) =>
-    transactions.filter((t) => t.participants.includes(userId));
-
-  const getActiveTransactions = (userId) =>
-    transactions.filter((t) => t.participants.includes(userId) && t.status !== "closed");
-
-  const updateTransaction = (transactionId, updates) => {
-    setTransactions((prev) =>
-      prev.map((t) => (t.id === transactionId ? { ...t, ...updates } : t))
-    );
-  };
-
-  // =============MATCH REQUESTS================
-  const createMatchRequest = (data) => {
-    const existing = matchRequests.find(
-      (mr) =>
-        mr.senderId === data.senderId &&
-        mr.travelerId === data.travelerId &&
-        mr.status === "pending" &&
-        ((mr.requestId && data.requestId && mr.requestId === data.requestId) ||
-         (mr.tripId && data.tripId && mr.tripId === data.tripId))
-    );
-    if (existing) { return {success: false, message: "Match request already exists"};}
-
-    const matchRequest = {
-      id: `match_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      status: "pending", // pending | accepted | declined
-      createdAt: new Date().toISOString(),
-      ...data,
-    };
-
-    setMatchRequests((prev) => [...prev, matchRequest]);
-    return { success: true, matchRequest };
-  };
-
-  const getIncomingMatchRequests = (userId, role) => {
-    if (role === "sender") {
-      return matchRequests.filter(
-        (mr) => mr.senderId === userId && mr.type === "traveler_to_sender" && mr.status === "pending"
-      );
+    let transaction = null;
+    if (response === "accepted") {
+      transaction = createTransaction({
+        senderId: proposal.senderId,
+        travelerId: proposal.travelerId,
+        requestId: proposal.requestId,
+        tripId: proposal.tripId,
+        from: proposal.from,
+        to: proposal.to,
+        itemType: proposal.itemType,
+      });
+      if (proposal.tripId) setTrips((previous) => previous.map((trip) => trip.id === proposal.tripId ? { ...trip, status: "matched" } : trip));
+      if (proposal.requestId) setRequests((previous) => previous.map((request) => request.id === proposal.requestId ? { ...request, status: "matched" } : request));
     }
-    return matchRequests.filter(
-      (mr) => mr.travelerId === userId && mr.type === "sender_to_traveler" && mr.status === "pending"
-    );
-  };
-
-  const getOutgoingMatchRequests = (userId, role) => {
-    if (role === "sender") {
-      return matchRequests.filter(
-        (mr) => mr.senderId === userId && mr.type === "sender_to_traveler" && mr.status === "pending"
-      );
-    }
-    return matchRequests.filter(
-      (mr) => mr.travelerId === userId && mr.type === "traveler_to_sender" && mr.status === "pending"
-    );
-  };
-
-  const acceptMatchRequest = (matchRequestId) => {
-    const matchReq = matchRequests.find((mr) => mr.id === matchRequestId);
-    if (!matchReq) { return { success: false, message: "Match request not found" }; }
-
-    setMatchRequests((prev) =>
-      prev.map((mr) => (mr.id === matchRequestId ? { ...mr, status: "accepted" } : mr))
-    );
-
-    const transaction = createTransaction({
-        senderId: matchReq.senderId, 
-        travelerId: matchReq.travelerId, 
-        requestId: matchReq.requestId, 
-        tripId: matchReq.tripId, 
-        from: matchReq.from, 
-        to: matchReq.to, 
-        itemType: matchReq.itemType,
-    }); 
-    if (matchReq.requestId) updateRequest (matchReq.requestId, {status: "matched"}); 
-    if (matchReq.tripId) updateTrip(matchReq.tripId, {status: "matched"});
-
     return { success: true, transaction };
   };
 
-  const declineMatchRequest = (matchRequestId) => {
-    setMatchRequests((prev) =>
-      prev.map((mr) => (mr.id === matchRequestId ? { ...mr, status: "declined" } : mr))
-    );
-    return { success: true };
-  };
-
-// =============MESSAGES================
+  const getTransactionById = (id) => transactions.find((transaction) => transaction.id === id);
+  const getTransactionsByUser = (id) => transactions.filter((transaction) => transaction.participants.includes(id));
+  const getActiveTransactions = (id) => transactions.filter((transaction) => transaction.participants.includes(id) && transaction.status !== "closed");
+  const updateTransaction = (id, updates) => setTransactions((previous) => previous.map((transaction) => transaction.id === id ? { ...transaction, ...updates } : transaction));
   const addMessage = (messageData) => {
-    const newMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      ...messageData,
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    return newMessage;
+    const message = { id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, createdAt: new Date().toISOString(), ...messageData };
+    setMessages((previous) => [...previous, message]);
+    return message;
   };
+  const getMessagesByTransaction = (id) => messages.filter((message) => message.transactionId === id).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-  const getMessagesByTransaction = (transactionId) =>
-    messages.filter((m) => m.transactionId === transactionId)
-            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  const value = useMemo(() => ({
+    users, getUserById,
+    requests, createRequest, getRequestById, updateRequest, getRequestsBySender, getActiveRequests,
+    trips, createTrip, getTripById, updateTrip, getTripsByTraveler, getActiveTrips,
+    matchRequests, createMatchRequest, getIncomingMatchRequests, getOutgoingMatchRequests,
+    acceptMatchRequest: (id) => respondToMatchRequest(id, "accepted"),
+    declineMatchRequest: (id) => respondToMatchRequest(id, "declined"),
+    transactions, createTransaction, getActiveTransactions, updateTransaction, getTransactionById, getTransactionsByUser,
+    messages, addMessage, getMessagesByTransaction,
+    refreshMarketplace, isMarketplaceLoading, marketplaceError,
+  }), [users, requests, trips, matchRequests, transactions, messages, isMarketplaceLoading, marketplaceError, refreshMarketplace]);
 
-    const value = {
-    users,
-    getUserById,
-
-    requests,
-    createRequest,
-    getRequestById, 
-    updateRequest,
-    getRequestsBySender,
-    getActiveRequests,
-
-    matchRequests, 
-    createMatchRequest, 
-    getIncomingMatchRequests, 
-    getOutgoingMatchRequests, 
-    acceptMatchRequest, 
-    declineMatchRequest,
-
-    trips,
-    createTrip,
-    getTripById, 
-    updateTrip,
-    getTripsByTraveler,
-    getActiveTrips,
-
-    transactions,
-    createTransaction,
-    getActiveTransactions,
-    updateTransaction,
-    getTransactionById, 
-    getTransactionsByUser, 
-
-    messages,
-    addMessage,
-    getMessagesByTransaction,
-  };
-
-  return (
-    <StorageContext.Provider value={value}>
-      {children}
-    </StorageContext.Provider>
-  );
+  return <StorageContext.Provider value={value}>{children}</StorageContext.Provider>;
 };
- 

@@ -8,6 +8,7 @@ import TravelerCard from "./TravelerCard";
 import RequestCard from "./RequestCard";
 import CreateRequest from "../create/CreateRequest";
 import CreateTrip from "../create/CreateTrip";
+import Icon from "../common/Icon";
 
 import {
   filterTripsForSender,
@@ -20,7 +21,10 @@ const FeedView = () => {
   const {
     getActiveTrips,
     getActiveRequests,
-    createMatchRequest, // ✅ match-request flow
+    createMatchRequest,
+    isMarketplaceLoading,
+    marketplaceError,
+    refreshMarketplace,
   } = useStorage();
 
   const theme = getTheme();
@@ -54,14 +58,14 @@ const FeedView = () => {
     return v !== undefined && v !== null && v !== "" && v !== false;
   });
 
-  const handleSendRequest = (trip) => {
-    const res = createMatchRequest({
+  const handleSendRequest = async (trip) => {
+    const res = await createMatchRequest({
       senderId: currentUser.id,
       travelerId: trip.travelerId,
       tripId: trip.id,
       from: trip.from,
       to: trip.to,
-      itemType: ITEM_TYPES.DOCUMENTS, // you can later make this selectable
+      itemType: trip.acceptedItems?.[0] || ITEM_TYPES.DOCUMENTS,
       type: "sender_to_traveler",
       senderName: currentUser.name,
       travelerName: trip.travelerName,
@@ -74,8 +78,8 @@ const FeedView = () => {
     alert("Request sent! The traveler will accept/decline it in Incoming Requests.");
   };
 
-  const handleHelp = (request) => {
-    const res = createMatchRequest({
+  const handleHelp = async (request) => {
+    const res = await createMatchRequest({
       senderId: request.senderId,
       travelerId: currentUser.id,
       requestId: request.id,
@@ -113,7 +117,7 @@ const FeedView = () => {
           onClick={() => setShowCreateForm(true)}
           className="primary-action feed-create"
         >
-          <span aria-hidden="true">+</span> {isSender() ? "Post a request" : "Post a trip"}
+          <Icon name="plus" size={18} /> {isSender() ? "Post a request" : "Post a trip"}
         </button>
       </div>
 
@@ -139,10 +143,13 @@ const FeedView = () => {
       )}
 
       {/* Grid */}
+      {marketplaceError && <div className="notice notice-error" role="alert">Marketplace data could not load: {marketplaceError} <button className="text-button" onClick={refreshMarketplace}>Try again</button></div>}
       <div className="feed-grid">
-        {filteredItems.length === 0 ? (
+        {isMarketplaceLoading ? (
+          <div className="empty-state"><div className="empty-mark"><Icon name="bag" /></div><h3>Loading routes</h3><p>Finding the latest shared trips and requests.</p></div>
+        ) : filteredItems.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-mark" aria-hidden="true">{isSender() ? "T" : "S"}</div>
+            <div className="empty-mark" aria-hidden="true"><Icon name={isSender() ? "bag" : "box"} /></div>
             <h3>
               {hasActiveFilters
                 ? "No results found"
