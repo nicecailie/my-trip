@@ -16,10 +16,10 @@ const AppRouter = () => {
 
 export default function AppRoot() {
   return (
-    <StorageProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <StorageProvider>
         <AppRouter />
-      </AuthProvider>
-    </StorageProvider>
+      </StorageProvider>
+    </AuthProvider>
   );
 }

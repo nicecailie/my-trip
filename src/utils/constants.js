@@ -51,23 +51,21 @@ export const AFRICAN_CITIES = [
 
 export const EUROPEAN_CITIES = [
     'London, UK',
+    'Manchester, UK',
+    'Birmingham, UK',
     'Cambridge, UK',
     'Edinburgh, UK',
     'Dublin, Ireland',
+    'Cork, Ireland',
+    'Paris, France',
+    'Lyon, France',
+    'Marseille, France',
+    'Brussels, Belgium',
+    'Amsterdam, Netherlands',
     'Lisbon, Portugal',
     'Madrid, Spain',
     'Berlin, Germany',
     'Rome, Italy',
-    'Brussels, Belgium',
-    'Paris, France',
-    'Berlin, Germany',
-    'Madrid, Spain',
-    'Rome, Italy',
-    'Amsterdam, Netherlands',
-    'Stockholm, Sweden',
-    'Oslo, Norway',
-    'Copenhagen, Denmark',
-    'Helsinki, Finland'
 ];
 
 export const ALL_CITIES = [
@@ -116,21 +114,21 @@ export const CHAT_PHASES = {
 
 
 export const THEME_COLORS = {
-  sender: {
-    primary: "#dc2626",
-    primaryHover: "#b91c1c",
-    light: "#fee2e2",
-    medium: "#fecaca",
-    gradient: "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)",
-    border: "#fecaca",
+sender: {
+    primary: "#e3a33c",
+    primaryHover: "#bf7d18",
+    light: "#fff5dc",
+    medium: "#f4d79b",
+    border: "#eac879",
+    text: "#0c392a",
   },
   traveler: {
-    primary: "#2563eb",
-    primaryHover: "#1d4ed8",
-    light: "#dbeafe",
-    medium: "#bfdbfe",
-    gradient: "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)",
-    border: "#bfdbfe",
+    primary: "#2f6b54",
+    primaryHover: "#184234",
+    light: "#e7f0ea",
+    medium: "#c3d8cc",
+    border: "#9ebdac",
+    text: "#ffffff",
   },
 };
 

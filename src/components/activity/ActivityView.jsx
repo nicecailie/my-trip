@@ -1,440 +1,78 @@
+import React, { useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useStorage } from "../../hooks/useStorage";
+import { ITEM_TYPE_LABELS, SIZE_LABELS } from "../../utils/constants";
+import { formatDate } from "../../utils/helpers";
+import IncomingRequests from "./IncomingRequests";
+import Icon from "../common/Icon";
 
-// src/components/activity/ActivityView.jsx - With Recipient Management
-import React, { useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useStorage } from '../../hooks/useStorage';
-import { SIZE_LABELS, ITEM_TYPE_LABELS } from '../../utils/constants';
-import { formatDate } from '../../utils/helpers';
-//import { styles } from '../../styles/styles';
-import { styles, THEME_COLORS} from '../../styles/styles';
-import IncomingRequests from './IncomingRequests';
-import { 
-  AddRecipientModal, 
-  DeliveryStatusTracker, 
-  RecipientInfoCard 
-} from '../delivery/RecipientSystem';
+const STATUS_STEPS = ["accepted", "in_transit", "dropped_off", "delivered", "completed"];
+const STATUS_LABELS = { accepted: "Accepted", in_transit: "In transit", dropped_off: "Dropped off", delivered: "Confirming", completed: "Completed" };
 
-const ActivityView = () => {
-  const { currentUser, isSender, getTheme } = useAuth();
-  const {
-    getRequestsBySender,
-    getTripsByTraveler,
-    getActiveTransactions,
-    getUserById,
-    getIncomingMatchRequests,
-    updateTransaction
-  } = useStorage();
+const RatingForm = ({ delivery, onSubmit }) => {
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const [activeTab, setActiveTab] = useState('posts');
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [showRecipientModal, setShowRecipientModal] = useState(false);
-  const theme = getTheme();
-
-  const myPosts = isSender()
-    ? getRequestsBySender(currentUser.id)
-    : getTripsByTraveler(currentUser.id);
-
-  const activeDeliveries = getActiveTransactions(currentUser.id);
-  const incoming = getIncomingMatchRequests
-    ? getIncomingMatchRequests(currentUser.id, currentUser.role)
-    : [];
-
-  const handleStatusUpdate = (txnId, newStatus) => {
-    updateTransaction(txnId, { status: newStatus });
-    alert(`Status updated to: ${newStatus}`);
+  const submit = async (event) => {
+    event.preventDefault(); setSaving(true); setError("");
+    const result = await onSubmit({ deliveryId: delivery.id, stars, comment });
+    setSaving(false);
+    if (!result.success) setError(result.error || "Rating could not be saved.");
   };
 
-  const renderMyPosts = () => {
-    if (myPosts.length === 0) {
-      return (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>{isSender() ? '📦' : '🧳'}</div>
-          <h3 style={styles.emptyTitle}>No posts yet</h3>
-          <p style={styles.emptyText}>
-            {isSender()
-              ? "You haven't posted any delivery requests yet"
-              : "You haven't posted any trips yet"}
-          </p>
-        </div>
-      );
-    }
-
-    return myPosts.map(post => (
-      <article className="activity-card" key={post.id} style={styles.activityCard}>
-        <div style={styles.cardHeader}>
-          <div>
-            <h3 style={styles.cardTitle}>
-              {isSender()
-                ? `📦 ${ITEM_TYPE_LABELS[post.itemType]}`
-                : `🧳 Trip to ${post.to.split(',')[0]}`}
-            </h3>
-
-            <div style={styles.cardRoute}>
-              <span>{post.from}</span>
-              <span style={styles.arrow}>→</span>
-              <span>{post.to}</span>
-            </div>
-          </div>
-
-          <span
-            style={{
-              ...styles.status,
-              ...(post.status === 'pending'
-                ? styles.statusPending
-                : post.status === 'matched'
-                ? { ...styles.statusActive, backgroundColor: theme.light, color: theme.primary }
-                : styles.statusCompleted)
-            }}
-          >
-            {post.status}
-          </span>
-        </div>
-
-        <div style={styles.details}>
-          {isSender() ? (
-            <>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>Size</span>
-                <span style={styles.detailValue}>{SIZE_LABELS[post.size]}</span>
-              </div>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>Needed By</span>
-                <span style={styles.detailValue}>{formatDate(post.neededBy)}</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>Travel Date</span>
-                <span style={styles.detailValue}>{formatDate(post.travelDate)}</span>
-              </div>
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>Available Space</span>
-                <span style={styles.detailValue}>{SIZE_LABELS[post.availableSpace]}</span>
-              </div>
-            </>
-          )}
-        </div>
-      </article>
-    ));
-  };
-
-  const renderActiveDeliveries = () => {
-    if (activeDeliveries.length === 0) {
-      return (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>🚚</div>
-          <h3 style={styles.emptyTitle}>No active deliveries</h3>
-          <p style={styles.emptyText}>Your active deliveries will appear here</p>
-        </div>
-      );
-    }
-
-    return activeDeliveries.map(transaction => {
-      const otherUserId = transaction.participants.find(id => id !== currentUser.id);
-      const otherUser = getUserById(otherUserId);
-      const isMyTurn = (
-        (isSender() && transaction.status === 'created') ||
-        (!isSender() && ['dropped_off', 'in_transit', 'arrived'].includes(transaction.status))
-      );
-
-      return (
-        <article className="activity-card" key={transaction.id} style={styles.activityCard}>
-          <div style={styles.cardHeader}>
-            <div>
-              <h3 style={styles.cardTitle}>{ITEM_TYPE_LABELS[transaction.itemType]}</h3>
-              <div style={styles.cardRoute}>
-                <span>{transaction.from}</span>
-                <span style={styles.arrow}>→</span>
-                <span>{transaction.to}</span>
-              </div>
-            </div>
-
-            <span
-              style={{
-                ...styles.status,
-                backgroundColor: theme.light,
-                color: theme.primary
-              }}
-            >
-              {transaction.status}
-            </span>
-          </div>
-
-          <div style={styles.details}>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>{isSender() ? 'Traveler' : 'Sender'}</span>
-              <span style={styles.detailValue}>
-                {otherUser?.name || 'Unknown'} ⭐ {otherUser?.rating?.toFixed(1) || '5.0'}
-              </span>
-            </div>
-
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>Created</span>
-              <span style={styles.detailValue}>{formatDate(transaction.createdAt)}</span>
-            </div>
-
-            {transaction.recipientAdded && (
-              <div style={styles.detailItem}>
-                <span style={styles.detailLabel}>Recipient</span>
-                <span style={styles.detailValue}>✅ {transaction.recipientName}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <button
-              onClick={() => setSelectedTransaction(transaction)}
-              style={{
-                flex: 1,
-                padding: '10px',
-                fontSize: '14px',
-                fontWeight: '600',
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              View Details
-            </button>
-
-            {isSender() && !transaction.recipientAdded && (
-              <button
-                onClick={() => {
-                  setSelectedTransaction(transaction);
-                  setShowRecipientModal(true);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  backgroundColor: theme.primary,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Add Recipient
-              </button>
-            )}
-
-            {isMyTurn && (
-              <button
-                onClick={() => {
-                  const nextStatus =
-                    transaction.status === 'created'
-                      ? 'dropped_off'
-                      : transaction.status === 'dropped_off'
-                      ? 'in_transit'
-                      : transaction.status === 'in_transit'
-                      ? 'arrived'
-                      : transaction.status === 'arrived'
-                      ? 'delivered'
-                      : transaction.status;
-
-                  handleStatusUpdate(transaction.id, nextStatus);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  backgroundColor: theme.primary,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                {transaction.status === 'created' && 'Confirm Drop-off'}
-                {transaction.status === 'dropped_off' && 'Start Journey'}
-                {transaction.status === 'in_transit' && 'Mark Arrived'}
-                {transaction.status === 'arrived' && 'Confirm Delivery'}
-              </button>
-            )}
-          </div>
-        </article>
-      );
-    });
-  };
-
-  return (
-    <div className="activity-view" style={styles.container}>
-      <div className="activity-tabs" style={styles.tabs}>
-        <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === 'posts'
-              ? { ...styles.activeTab, color: theme.primary, borderBottomColor: theme.primary }
-              : {})
-          }}
-          onClick={() => setActiveTab('posts')}
-        >
-          My Posts ({myPosts.length})
-        </button>
-
-        <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === 'incoming'
-              ? { ...styles.activeTab, color: theme.primary, borderBottomColor: theme.primary }
-              : {})
-          }}
-          onClick={() => setActiveTab('incoming')}
-        >
-          Incoming Requests ({incoming.length})
-        </button>
-
-        <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === 'deliveries'
-              ? { ...styles.activeTab, color: theme.primary, borderBottomColor: theme.primary }
-              : {})
-          }}
-          onClick={() => setActiveTab('deliveries')}
-        >
-          Active Deliveries ({activeDeliveries.length})
-        </button>
-      </div>
-
-      {activeTab === 'posts' && renderMyPosts()}
-      {activeTab === 'incoming' && <IncomingRequests />}
-      {activeTab === 'deliveries' && renderActiveDeliveries()}
-
-      {/* Transaction Detail Modal */}
-      {selectedTransaction && !showRecipientModal && (
-        <TransactionDetailModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
-      )}
-
-      {/* Add Recipient Modal */}
-      {showRecipientModal && selectedTransaction && (
-        <AddRecipientModal
-          transaction={selectedTransaction}
-          onClose={() => {
-            setShowRecipientModal(false);
-            setSelectedTransaction(null);
-          }}
-        />
-      )}
-    </div>
-  );
+  return <form className="rating-form" onSubmit={submit}><strong>How was your experience?</strong><div className="star-picker" aria-label="Rating">{[1,2,3,4,5].map((value) => <button type="button" key={value} className={value <= stars ? "selected" : ""} onClick={() => setStars(value)} aria-label={`${value} star${value > 1 ? "s" : ""}`}><Icon name="star" /></button>)}</div><input value={comment} onChange={(event) => setComment(event.target.value)} maxLength="300" placeholder="Short comment (optional)" />{error && <span className="field-error">{error}</span>}<button className="secondary-action" disabled={saving}>{saving ? "Saving…" : "Submit rating"}</button></form>;
 };
 
-// ========== TRANSACTION DETAIL MODAL ==========
-const TransactionDetailModal = ({ transaction, onClose }) => {
-  const { getTheme } = useAuth();
-  const { getUserById } = useStorage();
-  const theme = getTheme();
+const ActivityView = () => {
+  const { currentUser, isSender } = useAuth();
+  const {
+    getRequestsBySender, getTripsByTraveler, getDeliveriesByUser,
+    getUserById, getIncomingMatchRequests, updateDeliveryStatus,
+    confirmDelivery, hasRatedDelivery, submitRating,
+  } = useStorage();
+  const incoming = getIncomingMatchRequests(currentUser.id);
+  const [activeTab, setActiveTab] = useState("deliveries");
+  const [actionError, setActionError] = useState("");
+  const [workingId, setWorkingId] = useState(null);
+  const posts = isSender() ? getRequestsBySender(currentUser.id) : getTripsByTraveler(currentUser.id);
+  const deliveries = getDeliveriesByUser(currentUser.id);
 
-  const sender = getUserById(transaction.senderId);
-  const traveler = getUserById(transaction.travelerId);
-
-  const styles = {
-    overlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
-    },
-    modal: {
-      backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: '30px',
-      maxWidth: '700px',
-      width: '100%',
-      maxHeight: '90vh',
-      overflowY: 'auto'
-    },
-    header: {
-      marginBottom: '24px'
-    },
-    title: {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      margin: '0 0 8px 0',
-      color: '#111827'
-    },
-    route: {
-      fontSize: '16px',
-      color: '#6b7280',
-      margin: 0
-    },
-    participantsCard: {
-      backgroundColor: '#f9fafb',
-      borderRadius: '12px',
-      padding: '16px',
-      marginBottom: '20px'
-    },
-    participantRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '8px 0'
-    },
-    closeButton: {
-      width: '100%',
-      padding: '14px',
-      fontSize: '15px',
-      fontWeight: '600',
-      backgroundColor: '#f3f4f6',
-      color: '#374151',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      marginTop: '20px'
-    }
+  const runAction = async (deliveryId, action) => {
+    setWorkingId(deliveryId); setActionError("");
+    const result = await action();
+    setWorkingId(null);
+    if (!result.success) setActionError(result.error || "That update could not be saved.");
   };
 
-  return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>{ITEM_TYPE_LABELS[transaction.itemType]}</h2>
-          <p style={styles.route}>
-            {transaction.from} → {transaction.to}
-          </p>
-        </div>
+  const renderPosts = () => posts.length ? posts.map((post) => <article className="simple-post-card" key={post.id}><div><strong>{isSender() ? ITEM_TYPE_LABELS[post.itemType] : `Trip to ${post.to.split(",")[0]}`}</strong><span>{post.from} → {post.to}</span></div><div><span className="delivery-status-pill">{post.status}</span><small>{isSender() ? `${SIZE_LABELS[post.size]} · needed ${formatDate(post.neededBy)}` : `${SIZE_LABELS[post.availableSpace]} · ${formatDate(post.travelDate)}`}</small></div></article>) : <div className="activity-empty"><h3>No posts yet</h3><p>Your {isSender() ? "delivery requests" : "trips"} will appear here.</p></div>;
 
-        <DeliveryStatusTracker transaction={transaction} />
-
-        <div style={styles.participantsCard}>
-          <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
-            Participants
-          </div>
-          <div style={styles.participantRow}>
-            <span style={{ color: '#6b7280' }}>Sender:</span>
-            <span style={{ fontWeight: '600' }}>{sender?.name}</span>
-          </div>
-          <div style={styles.participantRow}>
-            <span style={{ color: '#6b7280' }}>Traveler:</span>
-            <span style={{ fontWeight: '600' }}>{traveler?.name}</span>
-          </div>
-        </div>
-
-        <RecipientInfoCard transaction={transaction} />
-
-        <button onClick={onClose} style={styles.closeButton}>
-          Close
-        </button>
+  const renderDeliveries = () => deliveries.length ? deliveries.map((delivery) => {
+    const traveler = currentUser.id === delivery.travelerId;
+    const otherUser = getUserById(traveler ? delivery.senderId : delivery.travelerId);
+    const ownConfirmed = traveler ? delivery.travelerConfirmedAt : delivery.senderConfirmedAt;
+    const currentStep = STATUS_STEPS.indexOf(delivery.status);
+    const rated = hasRatedDelivery(delivery.id, currentUser.id);
+    return <article className="delivery-card" key={delivery.id}>
+      <header><div><span className="eyebrow">{ITEM_TYPE_LABELS[delivery.itemType]}</span><h3>{delivery.from.split(",")[0]} → {delivery.to.split(",")[0]}</h3><p>With {otherUser?.name || "another Chagga member"}</p></div><span className="delivery-status-pill">{STATUS_LABELS[delivery.status] || delivery.status}</span></header>
+      <div className="status-steps">{STATUS_STEPS.map((status, index) => <div className={index <= currentStep ? "done" : ""} key={status}><span>{index < currentStep || delivery.status === "completed" ? <Icon name="check" size={13} /> : index + 1}</span><small>{STATUS_LABELS[status]}</small></div>)}</div>
+      <div className="delivery-actions">
+        {traveler && delivery.status === "accepted" && <button className="primary-action" disabled={workingId === delivery.id} onClick={() => runAction(delivery.id, () => updateDeliveryStatus(delivery.id, "in_transit"))}>Mark in transit</button>}
+        {traveler && delivery.status === "in_transit" && <button className="primary-action" disabled={workingId === delivery.id} onClick={() => runAction(delivery.id, () => updateDeliveryStatus(delivery.id, "dropped_off"))}>Confirm drop-off</button>}
+        {["dropped_off", "delivered"].includes(delivery.status) && !ownConfirmed && <button className="primary-action" disabled={workingId === delivery.id} onClick={() => runAction(delivery.id, () => confirmDelivery(delivery.id))}>Confirm delivery</button>}
+        {["dropped_off", "delivered"].includes(delivery.status) && ownConfirmed && <p className="waiting-note"><Icon name="check" size={16} /> You confirmed. Waiting for the other person.</p>}
       </div>
-    </div>
-  );
+      {delivery.status === "completed" && !rated && <RatingForm delivery={delivery} onSubmit={submitRating} />}
+      {delivery.status === "completed" && rated && <p className="rating-thanks"><Icon name="check" size={16} /> Rating submitted. Thank you.</p>}
+    </article>;
+  }) : <div className="activity-empty"><h3>No deliveries yet</h3><p>When a match is accepted, its progress will appear here.</p></div>;
+
+  return <section className="activity-view"><header className="page-heading compact"><span className="eyebrow">Keep track without the complexity</span><h1>My activity</h1><p>Your posts, matches, and active deliveries in one place.</p></header>
+    <nav className="simple-tabs" aria-label="Activity sections"><button className={activeTab === "deliveries" ? "active" : ""} onClick={() => setActiveTab("deliveries")}>Deliveries</button><button className={activeTab === "matches" ? "active" : ""} onClick={() => setActiveTab("matches")}>Match requests{incoming.length > 0 && <span>{incoming.length}</span>}</button><button className={activeTab === "posts" ? "active" : ""} onClick={() => setActiveTab("posts")}>My posts</button></nav>
+    {actionError && <div className="notice notice-error">{actionError}</div>}
+    <div className="activity-content">{activeTab === "deliveries" ? renderDeliveries() : activeTab === "matches" ? <IncomingRequests /> : renderPosts()}</div>
+  </section>;
 };
 
 export default ActivityView;

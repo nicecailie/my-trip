@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { useStorage } from "../../hooks/useStorage";
 import { useAuth } from "../../hooks/useAuth";
 import { ITEM_TYPE_LABELS, SIZE_LABELS, ITEM_TYPES } from "../../utils/constants";
+import Icon from "../common/Icon";
 
 const TravelerCard = ({ trip, onSendRequest }) => {
   const { getUserById, createMatchRequest, getOutgoingMatchRequests } = useStorage();
@@ -22,11 +23,11 @@ const TravelerCard = ({ trip, onSendRequest }) => {
 
   const alreadySent = outgoing.some((mr) => mr.tripId === trip.id && mr.status === "pending");
 
-  const handleSend = () => {
+  const handleSend = async () => {
     // If parent passed a handler (FeedView), use it.
     // Otherwise, handle here (recommended).
     if (onSendRequest) {
-      onSendRequest(trip);
+      await onSendRequest(trip);
       return;
     }
 
@@ -38,7 +39,7 @@ const TravelerCard = ({ trip, onSendRequest }) => {
     const defaultItemType =
       (trip.acceptedItems && trip.acceptedItems[0]) || ITEM_TYPES.DOCUMENTS;
 
-    const result = createMatchRequest({
+    const result = await createMatchRequest({
       senderId: currentUser.id,
       travelerId: trip.travelerId,
       tripId: trip.id,
@@ -62,7 +63,7 @@ const TravelerCard = ({ trip, onSendRequest }) => {
   };
 
   const buttonText = requestSentFlash
-    ? "✓ Request Sent!"
+    ? "Request sent"
     : alreadySent
     ? "Request Pending"
     : "Send Request";
@@ -89,10 +90,10 @@ const TravelerCard = ({ trip, onSendRequest }) => {
 
       <div style={styles.header}>
         <div style={styles.userInfo}>
-          <h3 style={styles.name}>🧳 {traveler?.name || "Traveler"}</h3>
+          <h3 className="card-person" style={styles.name}><Icon name="bag" size={19} /> {traveler?.name || trip.travelerName || "Traveler"}</h3>
 
           <div style={styles.ratingRow}>
-            <span>⭐</span>
+            <Icon name="star" size={14} />
             <span>{traveler?.rating?.toFixed(1) || "5.0"}</span>
             <span style={styles.dot}>•</span>
             <span>{traveler?.completedDeliveries || 0} deliveries</span>

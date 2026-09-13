@@ -3,9 +3,10 @@ import React from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useStorage } from "../../hooks/useStorage";
 import { ITEM_TYPE_LABELS } from "../../utils/constants";
+import Icon from "../common/Icon";
 
 const IncomingRequests = () => {
-  const { currentUser, isSender, getTheme } = useAuth();
+  const { currentUser, getTheme } = useAuth();
   const {
     getIncomingMatchRequests,
     acceptMatchRequest,
@@ -21,8 +22,8 @@ const IncomingRequests = () => {
     ? getIncomingMatchRequests(currentUser.id, currentUser.role)
     : [];
 
-  const handleAccept = (matchRequestId) => {
-    const result = acceptMatchRequest(matchRequestId);
+  const handleAccept = async (matchRequestId) => {
+    const result = await acceptMatchRequest(matchRequestId);
     if (result?.success) {
       alert("Match accepted! Check your Messages to coordinate.");
     } else {
@@ -30,9 +31,10 @@ const IncomingRequests = () => {
     }
   };
 
-  const handleDecline = (matchRequestId) => {
+  const handleDecline = async (matchRequestId) => {
     if (window.confirm("Are you sure you want to decline this request?")) {
-      declineMatchRequest(matchRequestId);
+      const result = await declineMatchRequest(matchRequestId);
+      if (!result?.success) alert(result?.error || "Could not decline request.");
     }
   };
 
@@ -114,19 +116,17 @@ const IncomingRequests = () => {
     return (
       <div style={styles.container}>
         <div style={styles.header}>
-          <h2 style={styles.title}>📬 Incoming Requests</h2>
+          <h2 className="section-title-icon" style={styles.title}><Icon name="inbox" /> Incoming Requests</h2>
           <p style={styles.subtitle}>
-            {isSender()
-              ? "Travelers who want to help with your deliveries"
-              : "Senders who want you to carry their items"}
+            Match proposals from senders and travelers appear here.
           </p>
         </div>
 
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>📭</div>
+          <div className="empty-mark" style={styles.emptyIcon}><Icon name="inbox" /></div>
           <h3 style={styles.emptyTitle}>No incoming requests</h3>
           <p style={styles.emptyText}>
-            When {isSender() ? "travelers offer to help" : "senders request your help"}, they'll appear here
+            When someone proposes a match, it will appear here.
           </p>
         </div>
       </div>
@@ -136,17 +136,16 @@ const IncomingRequests = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>📬 Incoming Requests ({incomingRequests.length})</h2>
+        <h2 className="section-title-icon" style={styles.title}><Icon name="inbox" /> Incoming Requests ({incomingRequests.length})</h2>
         <p style={styles.subtitle}>
-          {isSender()
-            ? "Travelers who want to help with your deliveries"
-            : "Senders who want you to carry their items"}
+          Review each proposal and accept only when the route and item work for you.
         </p>
       </div>
 
       <div style={styles.list}>
         {incomingRequests.map((matchReq) => {
-          const otherUserId = isSender() ? matchReq.travelerId : matchReq.senderId;
+          const currentUserIsSender = matchReq.senderId === currentUser.id;
+          const otherUserId = currentUserIsSender ? matchReq.travelerId : matchReq.senderId;
           const otherUser = getUserById(otherUserId);
 
           const originalRequest = matchReq.requestId ? getRequestById(matchReq.requestId) : null;
@@ -158,13 +157,13 @@ const IncomingRequests = () => {
               <div style={styles.cardHeader}>
                 <div style={styles.userInfo}>
                   <h3 style={styles.userName}>
-                    {isSender() ? "🧳" : "📦"} {otherUser?.name || "User"}
+                    {otherUser?.name || "User"}
                   </h3>
                   <div style={styles.userMeta}>
-                    ⭐ {otherUser?.rating?.toFixed(1) || "5.0"} • {otherUser?.completedDeliveries || 0} deliveries
+                    {otherUser?.rating?.toFixed(1) || "5.0"} rating • {otherUser?.completedDeliveries || 0} deliveries
                   </div>
                 </div>
-                <div style={styles.badge}>{isSender() ? "Wants to Help" : "Needs Delivery"}</div>
+                <div style={styles.badge}>{currentUserIsSender ? "Wants to help" : "Needs delivery"}</div>
               </div>
 
               <div style={styles.requestDetails}>
@@ -207,10 +206,10 @@ const IncomingRequests = () => {
 
               <div style={styles.actions}>
                 <button onClick={() => handleAccept(matchReq.id)} style={{ ...styles.button, ...styles.acceptButton }}>
-                  ✓ Accept
+                  Accept
                 </button>
                 <button onClick={() => handleDecline(matchReq.id)} style={{ ...styles.button, ...styles.declineButton }}>
-                  ✕ Decline
+                  Decline
                 </button>
               </div>
 

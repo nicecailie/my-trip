@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import ChaggaLogo from "../common/ChaggaLogo";
 
 const PasswordReset = () => {
   const { updatePassword, cancelRecovery } = useAuth();
@@ -30,7 +31,7 @@ const PasswordReset = () => {
   return (
     <main className="reset-page">
       <section className="reset-card">
-        <div className="brand-lockup reset-brand" aria-label="MyTrip"><span className="brand-mark" aria-hidden="true">M</span><span>MyTrip</span></div>
+        <div className="brand-lockup reset-brand" aria-label="Chagga"><ChaggaLogo /></div>
         <span className="eyebrow">Account recovery</span>
         <h1>Choose a new password</h1>
         <p>Your new password must contain at least 8 characters.</p>

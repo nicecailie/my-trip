@@ -4,23 +4,21 @@
 // ========== COLOR PALETTES ==========
 export const THEME_COLORS = {
   sender: {
-    primary: '#f05b3f',
-    primaryHover: '#d9472e',
+    primary: '#d95c3f',
+    primaryHover: '#b74630',
     primaryLight: '#fff0ed',
     light: '#fff0ed',
     border: '#f5c8bf',
     primaryDark: '#9f301f',
-    gradient: 'linear-gradient(135deg, #f05b3f 0%, #d9472e 100%)',
     shadow: '0 10px 32px rgba(240, 91, 63, 0.22)'
   },
   traveler: {
-    primary: '#1a8e89',
-    primaryHover: '#14736f',
+    primary: '#1f766b',
+    primaryHover: '#16594f',
     primaryLight: '#eaf8f6',
     light: '#eaf8f6',
     border: '#b9dedb',
     primaryDark: '#0d5552',
-    gradient: 'linear-gradient(135deg, #1a8e89 0%, #14736f 100%)',
     shadow: '0 10px 32px rgba(26, 142, 137, 0.22)'
   },
   neutral: {
@@ -117,7 +115,7 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#12352f',
     padding: spacing.lg,
     fontFamily: typography.fontFamily
   },
@@ -141,10 +139,7 @@ export const styles = {
     fontWeight: typography.fontWeight.extrabold,
     textAlign: 'center',
     margin: `0 0 ${spacing.sm} 0`,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text'
+    color: '#12352f'
   },
   authSubtitle: {
     fontSize: typography.fontSize.md,
@@ -176,7 +171,7 @@ export const styles = {
   roleCardHover: {
     transform: 'translateY(-8px)',
     boxShadow: shadows.xl,
-    borderColor: '#667eea'
+    borderColor: '#1f766b'
   },
   roleIcon: {
     fontSize: '80px',
@@ -235,7 +230,7 @@ export const styles = {
     fontFamily: typography.fontFamily
   },
   inputFocus: {
-    borderColor: '#667eea',
+    borderColor: '#1f766b',
     boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)'
   },
   
@@ -253,7 +248,7 @@ export const styles = {
     overflow: 'hidden'
   },
   buttonPrimary: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#d95c3f',
     color: THEME_COLORS.neutral.white,
     boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
   },
@@ -269,7 +264,7 @@ export const styles = {
 
   // ========== HEADER ==========
   header: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#12352f',
     padding: `${spacing.lg} 0`,
     boxShadow: shadows.lg,
     position: 'sticky',
@@ -366,8 +361,8 @@ export const styles = {
     position: 'relative'
   },
   activeNavButton: {
-    color: '#667eea',
-    borderBottomColor: '#667eea'
+    color: '#1f766b',
+    borderBottomColor: '#1f766b'
   },
 
   // ========== MAIN CONTENT ==========
@@ -397,9 +392,7 @@ export const styles = {
     fontSize: typography.fontSize.huge,
     color: THEME_COLORS.neutral.gray900,
     fontWeight: typography.fontWeight.extrabold,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent'
+    color: '#12352f'
   },
   feedSubtitle: {
     margin: `${spacing.sm} 0 0 0`,
@@ -516,8 +509,8 @@ export const styles = {
     whiteSpace: 'nowrap'
   },
   activeTab: {
-    color: '#667eea',
-    borderBottomColor: '#667eea'
+    color: '#1f766b',
+    borderBottomColor: '#1f766b'
   },
 
   // ========== EMPTY STATES ==========
@@ -649,7 +642,7 @@ button:hover {
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: #667eea !important;
+  border-color: #1f766b !important;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 `;

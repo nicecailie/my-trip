@@ -1,230 +1,73 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
 import { useStorage } from "../../hooks/useStorage";
-import { ITEM_TYPE_LABELS, SIZE_LABELS, ALL_CITIES } from "../../utils/constants";
+import { AFRICAN_CITIES, EUROPEAN_CITIES, ITEM_TYPE_LABELS, SIZE_LABELS } from "../../utils/constants";
+import Icon from "../common/Icon";
+
+const CityOptions = () => <>
+  <optgroup label="Africa">{AFRICAN_CITIES.map((city) => <option key={city}>{city}</option>)}</optgroup>
+  <optgroup label="Europe — priority corridors">{EUROPEAN_CITIES.map((city) => <option key={city}>{city}</option>)}</optgroup>
+</>;
 
 const CreateRequest = ({ onClose, onCreate }) => {
-  const { currentUser, getTheme } = useAuth();
   const { createRequest } = useStorage();
-  const theme = getTheme();
+  const [formData, setFormData] = useState({ itemType: "", from: "", to: "", neededBy: "", size: "", description: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const setField = (field, value) => setFormData((previous) => ({ ...previous, [field]: value }));
+  const isValid = formData.itemType && formData.from && formData.to && formData.from !== formData.to && formData.neededBy && formData.size;
 
-  const [formData, setFormData] = useState({
-    itemType: "",
-    from: "",
-    to: "",
-    neededBy: "",
-    size: "",
-    description: "",
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const request = createRequest({
-      ...formData,
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-    });
-
-    onCreate?.(request);
-    onClose?.();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!isValid || isSubmitting) return;
+    setIsSubmitting(true);
+    setError("");
+    try {
+      const request = await createRequest(formData);
+      onCreate?.(request);
+      onClose?.();
+    } catch (submitError) {
+      setError(submitError.message || "Your delivery request could not be posted.");
+      setIsSubmitting(false);
+    }
   };
 
-  const isValid =
-    formData.itemType &&
-    formData.from &&
-    formData.to &&
-    formData.from !== formData.to &&
-    formData.neededBy &&
-    formData.size;
-
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 style={styles.modalTitle}>Post a Delivery Request</h2>
+    <div className="market-modal-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
+      <section className="market-modal" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
+        <header className="market-modal-header">
+          <span className="modal-icon"><Icon name="box" size={24} /></span>
+          <div><span className="eyebrow">Send it with care</span><h2 id="request-modal-title">Post a delivery request</h2><p>Share enough detail for the right traveler to offer help.</p></div>
+          <button className="icon-button modal-close" type="button" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
+        </header>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>What needs to be delivered? *</label>
-            <select
-              style={styles.select}
-              value={formData.itemType}
-              onChange={(e) => setFormData({ ...formData, itemType: e.target.value })}
-              required
-            >
-              <option value="">Select item type</option>
-              {Object.keys(ITEM_TYPE_LABELS).map((key) => (
-                <option key={key} value={key}>
-                  {ITEM_TYPE_LABELS[key]}
-                </option>
-              ))}
-            </select>
-          </div>
+        <form className="market-form" onSubmit={handleSubmit}>
+          <fieldset className="form-section"><legend><Icon name="box" /> What are you sending?</legend>
+            <div className="choice-grid">{Object.entries(ITEM_TYPE_LABELS).map(([key, label]) => <label className={formData.itemType === key ? "choice-card selected" : "choice-card"} key={key}><input type="radio" name="itemType" value={key} checked={formData.itemType === key} onChange={(e) => setField("itemType", e.target.value)} /><Icon name={key === "documents" ? "send" : "box"} /><span>{label}</span><Icon name="check" className="choice-check" /></label>)}</div>
+          </fieldset>
 
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>From *</label>
-              <select
-                style={styles.select}
-                value={formData.from}
-                onChange={(e) => setFormData({ ...formData, from: e.target.value })}
-                required
-              >
-                <option value="">Select city</option>
-                {ALL_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+          <fieldset className="form-section"><legend><Icon name="route" /> Delivery route</legend>
+            <div className="form-grid two-columns">
+              <label className="market-field">From<select value={formData.from} onChange={(e) => setField("from", e.target.value)} required><option value="">Choose a city</option><CityOptions /></select></label>
+              <label className="market-field">To<select value={formData.to} onChange={(e) => setField("to", e.target.value)} required><option value="">Choose a city</option><CityOptions /></select></label>
             </div>
+            {formData.from && formData.from === formData.to && <p className="field-error">Choose two different cities.</p>}
+          </fieldset>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>To *</label>
-              <select
-                style={styles.select}
-                value={formData.to}
-                onChange={(e) => setFormData({ ...formData, to: e.target.value })}
-                required
-              >
-                <option value="">Select city</option>
-                {ALL_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+          <fieldset className="form-section"><legend><Icon name="calendar" /> Timing and size</legend>
+            <div className="form-grid two-columns">
+              <label className="market-field">Needed by<input type="date" value={formData.neededBy} onChange={(e) => setField("neededBy", e.target.value)} min={new Date().toISOString().split("T")[0]} required /></label>
+              <label className="market-field">Package size<select value={formData.size} onChange={(e) => setField("size", e.target.value)} required><option value="">Choose a size</option>{Object.entries(SIZE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             </div>
-          </div>
+          </fieldset>
 
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Needed By *</label>
-              <input
-                type="date"
-                style={styles.input}
-                value={formData.neededBy}
-                onChange={(e) => setFormData({ ...formData, neededBy: e.target.value })}
-                min={new Date().toISOString().split("T")[0]}
-                required
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Size *</label>
-              <select
-                style={styles.select}
-                value={formData.size}
-                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                required
-              >
-                <option value="">Select size</option>
-                {Object.keys(SIZE_LABELS).map((key) => (
-                  <option key={key} value={key}>
-                    {SIZE_LABELS[key]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Description (optional)</label>
-            <textarea
-              style={{ ...styles.input, minHeight: 80, resize: "vertical" }}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Any additional details..."
-            />
-          </div>
-
-          <div style={styles.modalActions}>
-            <button type="button" onClick={onClose} style={styles.cancelButton}>
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={!isValid}
-              style={{
-                ...styles.button,
-                backgroundColor: theme.primary,
-                color: "white",
-                opacity: isValid ? 1 : 0.5,
-              }}
-            >
-              Post Request
-            </button>
-          </div>
+          <label className="market-field">Item details <small>Optional, but recommended</small><textarea maxLength="600" value={formData.description} onChange={(e) => setField("description", e.target.value)} placeholder="Describe the exact contents, packaging, and whether the traveler can inspect it." /><span className="character-count">{formData.description.length}/600</span></label>
+          <div className="form-safety"><Icon name="shield" /><span>Do not post cash, unknown sealed packages, dangerous goods, or restricted items.</span></div>
+          {error && <p className="form-submit-error" role="alert">{error}</p>}
+          <footer className="market-modal-actions"><button type="button" className="secondary-action" onClick={onClose}>Cancel</button><button type="submit" className="primary-action" disabled={!isValid || isSubmitting}>{isSubmitting ? "Posting…" : "Post request"}</button></footer>
         </form>
-      </div>
+      </section>
     </div>
   );
 };
 
 export default CreateRequest;
-
-/**
- * NOTE:
- * You can either:
- *  - import shared styles from a central file, OR
- *  - keep local styles here
- * For now I’m assuming you keep the same styles object available.
- */
-const styles = {
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    zIndex: 50,
-  },
-  modal: {
-    backgroundColor: "white",
-    borderRadius: 14,
-    width: "100%",
-    maxWidth: 720,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-    padding: 22,
-    maxHeight: "90vh",
-    overflowY: "auto",
-  },
-  modalTitle: { margin: 0, fontSize: 18, color: "#111827", marginBottom: 20 },
-  form: { marginTop: 0 },
-  formRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
-  formGroup: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 },
-  label: { fontSize: 13, fontWeight: 600, color: "#374151" },
-  input: {
-    width: "100%",
-    padding: 12,
-    fontSize: 14,
-    border: "1px solid #e0e0e0",
-    borderRadius: 6,
-    boxSizing: "border-box",
-    backgroundColor: "white",
-    outline: "none",
-  },
-  select: {
-    width: "100%",
-    padding: 12,
-    fontSize: 14,
-    border: "1px solid #e0e0e0",
-    borderRadius: 6,
-    boxSizing: "border-box",
-    backgroundColor: "white",
-  },
-  modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 },
-  cancelButton: {
-    padding: "12px 18px",
-    fontSize: 14,
-    fontWeight: 600,
-    backgroundColor: "#f3f4f6",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
-    cursor: "pointer",
-  },
-  button: { padding: "12px 24px", fontSize: 14, fontWeight: 600, border: "none", borderRadius: 8, cursor: "pointer" },
-};
